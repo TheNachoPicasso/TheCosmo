@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NBA Betting Predictions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .high-edge {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .low-edge {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .high-confidence {
+            color: #28a745;
+        }
+        .low-confidence {
+            color: #dc3545;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,0,0,.075);
+        }
+        .sortable {
+            cursor: pointer;
+        }
+        .sortable:hover {
+            background-color: rgba(0,0,0,.05);
+        }
+        .sort-icon {
+            margin-left: 5px;
+        }
+        .refresh-btn {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="position-relative">
+            <h2 class="mb-4 text-center">NBA Betting Opportunities</h2>
+            <button class="btn btn-primary refresh-btn" onclick="refreshPredictions()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Metrics Explanation Card -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Key Metrics Explained</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p class="mb-2"><strong>Win Probability</strong></p>
+                                <small class="text-muted">Estimated chance of covering the spread based on historical data and current form</small>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-2"><strong>Edge</strong></p>
+                                <small class="text-muted">Difference between our predicted probability and the implied market probability. <span class="text-success">Green</span> indicates positive edge</small>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-2"><strong>Confidence</strong></p>
+                                <small class="text-muted">Overall rating (0-100%) based on edge size, team stats, and other factors</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictions Table -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="sortable" onclick="sortTable(0)">Team <i class="fas fa-sort sort-icon"></i></th>
+                                <th class="sortable" onclick="sortTable(1)">Win Probability <i class="fas fa-sort sort-icon"></i></th>
+                                <th class="sortable" onclick="sortTable(2)">Confidence <i class="fas fa-sort sort-icon"></i></th>
+                                <th class="sortable" onclick="sortTable(3)">Edge <i class="fas fa-sort sort-icon"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="predictions">
+                            <!-- Data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentSort = { column: -1, asc: true };
+
+        function refreshPredictions() {
+            document.querySelector('.refresh-btn i').classList.add('fa-spin');
+            loadPredictions().then(() => {
+                setTimeout(() => {
+                    document.querySelector('.refresh-btn i').classList.remove('fa-spin');
+                }, 500);
+            });
+        }
+
+        function sortTable(column) {
+            const tbody = document.getElementById('predictions');
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            
+            // Update sort direction
+            if (currentSort.column === column) {
+                currentSort.asc = !currentSort.asc;
+            } else {
+                currentSort = { column: column, asc: true };
+            }
+            
+            // Sort rows
+            rows.sort((a, b) => {
+                let aVal = a.cells[column].textContent;
+                let bVal = b.cells[column].textContent;
+                
+                // Remove % and convert to number for numeric columns
+                if (column > 0) {
+                    aVal = parseFloat(aVal.replace('%', ''));
+                    bVal = parseFloat(bVal.replace('%', ''));
+                }
+                
+                if (aVal < bVal) return currentSort.asc ? -1 : 1;
+                if (aVal > bVal) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
+            
+            // Reorder rows in the table
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // Update sort icons
+            document.querySelectorAll('.sort-icon').forEach((icon, index) => {
+                if (index === column) {
+                    icon.className = `fas ${currentSort.asc ? 'fa-sort-up' : 'fa-sort-down'} sort-icon`;
+                } else {
+                    icon.className = 'fas fa-sort sort-icon';
+                }
+            });
+        }
+
+        function loadPredictions() {
+            return fetch('/predict')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('predictions');
+                    tbody.innerHTML = ''; // Clear existing rows
+                    data.predictions.forEach(pred => {
+                        const row = document.createElement('tr');
+                        const edge = parseFloat(pred.edge);
+                        const confidence = parseFloat(pred.confidence);
+                        row.innerHTML = `
+                            <td>${pred.team}</td>
+                            <td>${pred.adjusted_prob}</td>
+                            <td class="${confidence > 20 ? 'high-confidence' : 'low-confidence'}">${pred.confidence}</td>
+                            <td class="${edge > 0 ? 'high-edge' : 'low-edge'}">${edge > 0 ? '+' : ''}${pred.edge}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                });
+        }
+
+        // Initial load
+        loadPredictions();
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NBA Betting Predictions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .prediction-card {
+            transition: transform 0.2s;
+        }
+        .prediction-card:hover {
+            transform: scale(1.02);
+        }
+        .high-edge {
+            color: #28a745;
+        }
+        .low-edge {
+            color: #dc3545;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h2 class="mb-4 text-center">{{ message }}</h2>
+        
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for prediction in predictions %}
+            <div class="col">
+                <div class="card prediction-card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">{{ prediction.team }}</h5>
+                        <div class="d-flex justify-content-between mb-2">
+                            <div>
+                                <div class="metric-label">Win Probability</div>
+                                <div class="h5">{{ prediction.adjusted_prob }}</div>
+                            </div>
+                            <div>
+                                <div class="metric-label">Confidence</div>
+                                <div class="h5">{{ prediction.confidence }}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="metric-label">Edge</div>
+                            <div class="h5 {% if prediction.edge|float > 0 %}high-edge{% else %}low-edge{% endif %}">
+                                {{ prediction.edge }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
