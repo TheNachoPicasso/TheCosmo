@@ -28,7 +28,7 @@ def convert_american_odds_to_implied_prob(odds):
 def fetch_live_data():
     odds_url = "https://api.the-odds-api.com/v4/sports/basketball_nba/odds"
     odds_params = {
-        "apiKey": "c98bbef59ce91813a160753c64273bbf",
+        "apiKey": "e8fa5910342b1de88ce6da3851217ef9",
         "regions": "us",
         "markets": "h2h,spreads",
         "oddsFormat": "american",
